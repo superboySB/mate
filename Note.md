@@ -13,6 +13,10 @@ conda create -n mate python=3.7 && conda activate mate
 conda install libglu
 cd mate && pip install -r requirements.txt && pip install -e . 
 ```
+运行PVE的demo
+```sh
+bash scripts/camera.mappo.sh
+```
 运行psro的demo
 ```sh
 python3 -m examples.psro.train
