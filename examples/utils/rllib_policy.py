@@ -1,5 +1,5 @@
 import copy
-import pickle as pkl
+import pickle5 as pkl
 import threading
 from pathlib import Path
 
@@ -35,33 +35,72 @@ SHARED_POLICY_ID = 'shared_policy'
 _CHECKPOINT_CACHE_LOCK = threading.RLock()
 _CHECKPOINT_CACHE = {}
 
+# [superboySB] I met bug: AttributeError: 'PosixPath' object has no attribute 'readlink'
+# def load_checkpoint(path):
+#     if path is not None:
+#         path = Path(path).absolute()
+#         
+#         # try:
+#         #     path = path.readlink()
+#         # except OSError:
+#         #     pass
+#         path = Path(os.readlink(path))
+#         # print(path)
+#         with _CHECKPOINT_CACHE_LOCK:
+#             try:
+#                 params, worker = _CHECKPOINT_CACHE[path]
+#             except KeyError:
+#                 with (path.parent.parent / 'params.pkl').open(mode='rb') as file:
+#                     params = pkl.load(file)
+#                 with path.open(mode='rb') as file:
+#                     checkpoint = pkl.load(file)
+#                     worker = pkl.loads(checkpoint['worker'])
+#                 _CHECKPOINT_CACHE[path] = (params, worker)
+#     else:
+#         params = None
+#         worker = None
+
+#     return path, worker, params
+
 
 def load_checkpoint(path):
     if path is not None:
         path = Path(path).absolute()
-        try:
-            # [superboySB] I met bug: AttributeError: 'PosixPath' object has no attribute 'readlink'
-            # path = path.readlink()
-            path = path._from_parts(os.readlink(path,))
-        except OSError:
-            pass
+        
+        # 调试信息: 打印原始路径
+        print(f'Original path: {path}')
 
+        # 确保路径存在
+        if not path.exists():
+            raise FileNotFoundError(f'Path does not exist: {path}')
+        
+        # 尝试读取符号链接，如果不是符号链接则使用原路径
+        try:
+            if os.path.islink(path):
+                resolved_path = Path(os.readlink(path))
+                print(f'Resolved symbolic link: {resolved_path}')
+            else:
+                resolved_path = path
+                print(f'Path is not a symbolic link, using original path: {resolved_path}')
+        except OSError as e:
+            print(f'Error occurred while reading symbolic link: {e}')
+            raise
+        
         with _CHECKPOINT_CACHE_LOCK:
             try:
-                params, worker = _CHECKPOINT_CACHE[path]
+                params, worker = _CHECKPOINT_CACHE[resolved_path]
             except KeyError:
-                with (path.parent.parent / 'params.pkl').open(mode='rb') as file:
+                with (resolved_path.parent.parent / 'params.pkl').open(mode='rb') as file:
                     params = pkl.load(file)
-                with path.open(mode='rb') as file:
+                with resolved_path.open(mode='rb') as file:
                     checkpoint = pkl.load(file)
                     worker = pkl.loads(checkpoint['worker'])
-                _CHECKPOINT_CACHE[path] = (params, worker)
+                _CHECKPOINT_CACHE[resolved_path] = (params, worker)
     else:
         params = None
         worker = None
 
-    return path, worker, params
-
+    return resolved_path, worker, params
 
 def get_preprocessor(space):
     return ModelCatalog.get_preprocessor_for_space(space)
@@ -82,6 +121,45 @@ def shared_policy_mapping_fn(agent_id, **kwargs):
 def independent_policy_mapping_fn(agent_id, **kwargs):
     return agent_id
 
+def print_state_types(state, prefix=''):
+    if isinstance(state, dict):
+        for key, value in state.items():
+            print(f'{prefix}{key}: {type(value)}')
+            print_state_types(value, prefix + '  ')
+    elif isinstance(state, list):
+        for index, item in enumerate(state):
+            print(f'{prefix}[{index}]: {type(item)}')
+            print_state_types(item, prefix + '  ')
+    elif isinstance(state, np.ndarray):
+        print(f'{prefix}ndarray dtype: {state.dtype}')
+    else:
+        print(f'{prefix}{type(state)}')
+
+def convert_ndarray_to_float32(state):
+    if isinstance(state, dict):
+        for key, value in state.items():
+            state[key] = convert_ndarray_to_float32(value)
+    elif isinstance(state, list):
+        state = [convert_ndarray_to_float32(item) for item in state]
+    elif isinstance(state, np.ndarray):
+        if state.dtype == np.object:
+            state = np.array(state.tolist(), dtype=np.float32)
+        else:
+            state = state.astype(np.float32)
+    return state
+
+def convert_optimizer_variables(optimizer_vars):
+    if isinstance(optimizer_vars, list):
+        for i in range(len(optimizer_vars)):
+            if isinstance(optimizer_vars[i], dict):
+                for key, value in optimizer_vars[i].items():
+                    if isinstance(value, dict):
+                        for k, v in value.items():
+                            if isinstance(v, np.ndarray) and v.dtype == np.object:
+                                optimizer_vars[i][key][k] = np.array(v.tolist(), dtype=np.float32)
+                            elif isinstance(v, np.ndarray) and v.dtype != np.float32:
+                                optimizer_vars[i][key][k] = v.astype(np.float32)
+    return optimizer_vars
 
 class RLlibPolicyMixIn(AgentBase):
     POLICY_CLASS = PPOTorchPolicy
@@ -214,7 +292,26 @@ class RLlibPolicyMixIn(AgentBase):
 
         if self.policy_id is None or policy_id != self.policy_id:
             self.policy_id = policy_id
-            self.policy.set_state(self.worker['state'][self.policy_id])
+
+            # 获取当前 policy 的状态
+            state = self.worker['state'][self.policy_id]
+
+            # 打印状态的类型
+            # print('Before conversion:')
+            # print_state_types(state)
+
+            # 递归转换状态字典中的所有 np.ndarray 类型
+            # state = convert_ndarray_to_float32(state)
+
+            # 专门处理 _optimizer_variables
+            # if '_optimizer_variables' in state:
+            #     state['_optimizer_variables'] = convert_optimizer_variables(state['_optimizer_variables'])
+
+            # 再次打印转换后的状态类型
+            # print('After conversion:')
+            # print_state_types(state)
+
+            self.policy.set_state(state)
 
     def __reduce__(self):
         return self.__class__, (

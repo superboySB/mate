@@ -10,3 +10,5 @@ nashpy == 0.0.20
 ray[rllib] >= 1.12.0, < 1.13.0  # later versions may work but have not been tested
 torch
 tensorboard
+pickle5
+wandb
