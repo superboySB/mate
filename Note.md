@@ -1,5 +1,5 @@
 # 自博弈实现方式的调研
-因为各种原因我只能用python3.7
+因为各种原因我只能用python3.7 + Windows环境
 ```sh
 # （Optional）required on Windows 建议测试 
 git config --global core.symlinks true 
