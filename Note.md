@@ -19,5 +19,6 @@ bash scripts/camera.mappo.sh
 ```
 运行psro的demo
 ```sh
+bash scripts/psro.sh
 python3 -m examples.psro.train
 ```

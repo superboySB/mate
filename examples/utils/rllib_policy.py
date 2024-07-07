@@ -3,6 +3,7 @@ import pickle as pkl
 import threading
 from pathlib import Path
 
+import os
 import numpy as np
 from ray.rllib.agents.ppo import PPOTorchPolicy
 from ray.rllib.agents.qmix.qmix import QMixTorchPolicy
@@ -39,7 +40,9 @@ def load_checkpoint(path):
     if path is not None:
         path = Path(path).absolute()
         try:
-            path = path.readlink()
+            # [superboySB] I met bug: AttributeError: 'PosixPath' object has no attribute 'readlink'
+            # path = path.readlink()
+            path = path._from_parts(os.readlink(path,))
         except OSError:
             pass
 

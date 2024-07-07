@@ -216,6 +216,7 @@ def train(
                 if len(ready) > 0:
                     for player, best_checkpoint_path in ray.get(ready):
                         print(f'Player {player}({i:05d}) ready.')
+                        print("best_checkpoint_path:", best_checkpoint_path)
                         (
                             trainer,
                             agent_class,
