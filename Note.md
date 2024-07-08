@@ -40,7 +40,10 @@ cd mate && pip install -r requirements.txt && pip install -e .
         # Then the Policy's (NN) weights.
         super().set_state(state)
 ```
-
+如果wandb卡住就
+```sh
+wandb offline
+```
 运行PVE的demo，效果挺不错的
 ```sh
 bash scripts/camera.mappo.sh

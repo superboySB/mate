@@ -37,7 +37,7 @@ fi
 
 # === Setup environment ============================================================================
 
-export CONDA_HOME="${HOME}/Miniconda3" # change to your conda prefix
+export CONDA_HOME="${HOME}/miniconda3" # change to your conda prefix
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CONDA_HOME}/lib"
 
 source "${CONDA_HOME}/etc/profile.d/conda.sh"
