@@ -44,7 +44,9 @@ cd mate && pip install -r requirements.txt && pip install -e .
 ```sh
 wandb offline
 ```
-运行PVE的demo，效果挺不错的
+
+## PVE
+运行PVE的train，效果挺不错的
 ```sh
 bash scripts/camera.mappo.sh
 ```
@@ -52,7 +54,21 @@ bash scripts/camera.mappo.sh
 ```sh
 python3 -m mate.evaluate --episodes 1 --render-communication         --camera-agent examples.mappo:MAPPOCameraAgent         --camera-kwargs '{ "checkpoint_path": "examples/mappo/camera/ray_results/MAPPO/latest-checkpoint" }' --no-render
 ```
-运行psro的demo，等一波结果
+
+## Self play
+运行psro的train，支持PSRO和使用ficititious self play（TODO：等一波有效的结果）
 ```sh
 bash scripts/psro.sh
+```
+我感觉测试阶段依然可以用最后的ckpt来做，比如camera方 (TODO: 有一个mismatch)
+```sh
+python3 -m mate.evaluate --episodes 1 --render-communication --no-render \
+        --camera-agent examples.mappo:MAPPOCameraAgent \
+        --camera-kwargs '{ "checkpoint_path": "/mnt/md0/daizipeng/mate/examples/psro/ray_results/NE-camera.HRL-MAPPO-vs.-target.MAPPO/camera/00001/PSRO-camera.HRL-MAPPO/latest-checkpoint" }' 
+```
+以及target方，可以直接根据最后的ckpt运行
+```sh
+python3 -m mate.evaluate --episodes 1 --render-communication --no-render \
+        --target-agent examples.mappo:MAPPOTargetAgent \
+        --target-kwargs '{ "checkpoint_path": "/mnt/md0/daizipeng/mate/examples/psro/ray_results/NE-camera.HRL-MAPPO-vs.-target.MAPPO/target/00001/PSRO-target.MAPPO/latest-checkpoint" }'
 ```

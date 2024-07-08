@@ -335,7 +335,7 @@ def main():
         '--meta-solver',
         type=str,
         metavar='SOLVER',
-        default='NashEquilibrium',
+        default='NashEquilibrium',   # NashEquilibrium, SelfPlay, FictitiousSelfPlay
         choices=list(META_SOLVERS.keys()),
         help='meta-strategy solver for the meta-game (default: %(default)s)',
     )

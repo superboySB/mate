@@ -48,7 +48,7 @@ if [[ -n "${WANDB_API_KEY:-}" && -x "$(command -v wandb)" ]]; then
 fi
 
 # === Jobs =========================================================================================
-
+# --meta-solver NE / FSP
 python3 -m examples.psro.train \
 	--project mate-psro \
 	--meta-solver NE \
