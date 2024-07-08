@@ -243,10 +243,22 @@ class TrainFromCheckpoint(RLlibCallbackBase):
                 raise FileNotFoundError(f'Checkpoint path "{checkpoint_path}" does not exist.')
 
             checkpoint_path = checkpoint_path.absolute()
+            
+            # [SuperboySB] met bug in python 3.7
+            # try:
+            #     checkpoint_path = checkpoint_path.readlink()
+            # except OSError:
+            #     pass
+            # 尝试读取符号链接，如果不是符号链接则使用原路径
             try:
-                checkpoint_path = checkpoint_path.readlink()
-            except OSError:
-                pass
+                if os.path.islink(checkpoint_path):
+                    checkpoint_path = Path(os.readlink(checkpoint_path))
+                    print(f'Resolved symbolic link: {checkpoint_path}')
+                else:
+                    print(f'Path is not a symbolic link, using original path: {checkpoint_path}')
+            except OSError as e:
+                print(f'Error occurred while reading symbolic link: {e}')
+                raise
 
         self.checkpoint_path = checkpoint_path
 
