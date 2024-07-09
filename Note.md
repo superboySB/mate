@@ -72,3 +72,9 @@ python3 -m mate.evaluate --episodes 1 --render-communication --no-render \
         --target-agent examples.mappo:MAPPOTargetAgent \
         --target-kwargs '{ "checkpoint_path": "/mnt/md0/daizipeng/mate/examples/psro/ray_results/NE-camera.HRL-MAPPO-vs.-target.MAPPO/target/00001/PSRO-target.MAPPO/latest-checkpoint" }'
 ```
+
+## Useful tips
+```sh
+ps aux | grep ray | grep -v grep | awk '{print $2}'
+ps aux | grep wandb | grep -v grep | awk '{print $2}'
+```

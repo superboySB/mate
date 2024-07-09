@@ -66,10 +66,11 @@ def train(
     timesteps_total=None,
 ):
     tune_callbacks = [SymlinkCheckpointCallback()]
-    if WandbLoggerCallback.is_available():
-        project = project or ('mate' if not DEBUG else 'mate-debug')
-        group = group or f'hrl.mappo.camera.{experiment.name}'
-        tune_callbacks.append(WandbLoggerCallback(project=project, group=group))
+    # [superboySB] 先不用wandb
+    # if WandbLoggerCallback.is_available():
+    #     project = project or ('mate' if not DEBUG else 'mate-debug')
+    #     group = group or f'hrl.mappo.camera.{experiment.name}'
+    #     tune_callbacks.append(WandbLoggerCallback(project=project, group=group))
 
     if not ray.is_initialized():
         ray.init(num_cpus=NUM_NODE_CPUS, local_mode=DEBUG)
